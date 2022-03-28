@@ -1,0 +1,92 @@
+class Node(object):
+    def __init__(self,key):
+        self.key = key
+        self.left = None
+        self.right = None
+        
+class SplayTree(object):
+    def __init__(self):
+        self.root = None
+        self.size = 0
+    def RightRotate(self,x): # x is the root node
+        y = x.left
+        x.left = y.right
+        y.right = x
+        return y
+    def LeftRotate(self,x): # x is the root node
+        y = x.right
+        x.right = y.left
+        y.left = x
+        return y
+    def splay(self,root,key):
+        """
+                 If the key exists in the tree, place the key at the root of the tree
+                 If the key does not exist, the last item accessed will be placed at the root of the tree
+        """
+        if root is None or root.key == key:
+            # If there is no root or the root of the tree is key, splay the root
+            return root
+        if root.key > key: # key in the left subtree
+            if root.left is None: # Left subtree is empty, then return to the only visited root node
+                return root
+            if root.left.key > key: # Zig-Zig (Left Left)
+                # First recursively move the key to the root of the left subtree of the left subtree
+                root.left.left = self.splay(root.left.left,key)
+                # Right-hand root rotation for the first time, and right-hand rotation is possible only after performing else
+                root = self.RightRotate(root)
+            elif root.left.key < key: # Zig-Zag (Left Right)
+                root.left.right = self.splay(root.left.right,key)
+                root.left = self.LeftRotate(root.left)
+            # LR situation: the root after adjustment is right-handed
+            return root if root.left is None else self.RightRotate(root)
+        else: # key in the right subtree
+            if root.right is None: # The right subtree is empty, it returns the only visited root node
+                return root
+            if root.right.key > key: # Zig-Zag (Right Left)
+                # First recursively move the key to the root of the left subtree of the right subtree
+                root.right.left = self.splay(root.right.left,key)
+                if root.right.left:
+                    root.right = self.RightRotate(root.right)
+            elif root.right.key < key: # Zag-Zag (Right Right)
+                    root.right.right = self.splay(root.right.right,key)
+                    root = self.LeftRotate(root)
+            # RL situation: left-handed root after adjustment
+            return root if root.right is None else self.LeftRotate(root)
+    def search(self,key):
+        self.root = self.splay(self.root,key)
+    def insert(self,key):
+        self.size += 1
+        return self._insert(self.root,key)
+    def _insert(self,root,key):
+        if root is None: # Data gap situation
+            return Node(key)
+        # Like accessing the node to be accessed is placed on the root node
+        root = self.splay(root,key)
+        if root.key == key: # If the root node == key, then directly return to the root node
+            return root
+        new = Node(key)
+        if root.key > key: 
+            # If the key of the root node> key, then the root node is taken as its right subtree, and the left subtree of the root node is taken as the left subtree of new
+            new.right = root
+            new.left = root.left
+            root.left = None
+        else:
+            new.left = root
+            new.right = root.right
+            root.right = None
+        return new # Return to the new root node
+    def preorder(self, subtree):
+        if subtree is not None:
+            print(subtree.key, end=' ')
+            self.preorder(subtree.left)
+            self.preorder(subtree.right)
+            
+if __name__=='__main__':
+    sp = SplayTree()
+    sp.root = sp.insert(35)
+    sp.root =sp.insert(50)
+    sp.root =sp.insert(20)
+    sp.root =sp.insert(40)
+    print("\ nCurrent root node:",sp.root.key) # 20
+    print("Preorder Traversal:")
+    sp.preorder(sp.root) 
